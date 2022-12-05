@@ -5,61 +5,58 @@ const server = express()
 //configurar o server para apresentar arquivos estaticos
 server.use(express.static('public'))
 
-//habilitar o body do formulario
+// //habilitar o body do formulario
 server.use(express.urlencoded({extended: true}))
 
 //configurar a conexeão com o banco de dados
 const Pool = require('pg').Pool
 const db = new Pool({
     user: 'postgres',
-    password: 'senha112233',
+    password: 'root',
     host: 'localhost',
     post: 5432,
     database: 'doe'
 })
 
-//configurando a tempelate engine
+//configurando a template engine
 const nunjucks = require("nunjucks")
 nunjucks.configure("./",{
     express: server,
     noCache: true, 
 })
 
-//lista de doadores: array 
-/*const donors = [
-    {
-        name: "Diego Fernandes",
-        blood: "AB+"
-    },
-    {
-        name: "João Vitor",
-        blood: "B+"
-    },
-    {
-        name: "Matheus Fernandes",
-        blood: "A+"
-    },
-    {
-        name: "Robson Fernandes",
-        blood: "O-"
-    }
+// //lista de doadores: array 
+// /*const donors = [
+//     {
+//         name: "Diego Fernandes",
+//         blood: "AB+"
+//     },
+//     {
+//         name: "João Vitor",
+//         blood: "B+"
+//     },
+//     {
+//         name: "Matheus Fernandes",
+//         blood: "A+"
+//     },
+//     {
+//         name: "Robson Fernandes",
+//         blood: "O-"
+//     }
 
-]
-*/
+// ]
+//*/
 //configurar a apresentação da pagina
 server.get("/", function(req, res) {
-    db.query("SELECT * FROM donors", function(err, result){
+    console.log("oi")
+    let donors = db.query("SELECT * FROM donors", function(err, result){
         if (err) return res.send("Erro no banco de dados.")
-
-
         const donors = result.rows
-
-        return res.render("index.html", {donors})
     })
-   
+    return res.render("index.html", {donors})
 })
 
-server.post("/", function(req, res){
+server.post("/", async function(req, res){
     //capturar os dados do formulario
     const name = req.body.name
     const email = req.body.email
@@ -73,24 +70,20 @@ server.post("/", function(req, res){
     //colocar os valores no banco de dados
     const query ="INSERT INTO donors(name, email, blood) VALUES ($1,$2,$3)"
     
-
     const values = [name, email, blood]
-        
-    db.query(query, values, function(err){
+  
+    await db.query(query, values, function(err){
         //fluxo de erro
         console.log(err)
-        if (err) return res.send("Erro no banco de dados.")
+        //if (err) return res.send("Erro no banco de dados.")
         
         //fluxo ideal
-        return res.redirect("/")
-
     })
-    
-
+    return res.redirect("/")
 })
 
-
 //ligar o servidor e permitir o acesso na porta 3000
-server.listen(3000, function() {
+server.listen(3000, async function() {
+    await db.connect()
     console.log("iniciei o server.")
 }) /*passar a porta do servidor*/
